@@ -5,18 +5,39 @@
     <script type="text/javascript">
         var url = "@routes.Application.tweets().webSocketURL()";
         var tweetSocket = new WebSocket(url);
+        connect(1);
 
-        tweetSocket.onmessage = function (event) {
-            console.log(event);
-            var data = JSON.parse(event.data);
+        function connect(attempt) {
+            var connectionAttempt = attempt;
+            var url = "@routes.Application.tweets().webSocketURL()";
+            var tweetSocket = new WebSocket(url);
+
+            tweetSocket.onmessage = function (event) {
+                console.log(event);
+                var data = JSON.parse(event.data);
+                appendTweet(data.text);
+            };
+            tweetSocket.onclose = function() {
+                if (connectionAttempt <= 3) {
+                    appendTweet("WARNING: Lost server connection, attempting to reconnect. Attempt number " + connectionAttempt);
+
+                    setTimeout(function() {
+                        connect(connectionAttempt + 1);
+                    }, 5000);
+                } else {
+                    alert("Connection with the server was lost.");
+                }
+            };
+            tweetSocket.onopen = function() {
+                tweetSocket.send("subscribe");
+            };
+        }
+
+        function appendTweet(text) {
             var tweet = document.createElement("p");
-            var text = document.createTextNode(data.text);
+            var text = document.createTextNode(text);
             tweet.appendChild(text);
             document.getElementById("tweets").appendChild(tweet);
-        };
-
-        tweetSocket.onopen = function() {
-            tweetSocket.send("subscribe");
-        };
+        }
     </script>
 }

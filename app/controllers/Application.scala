@@ -11,6 +11,9 @@ class Application extends Controller {
     Ok(views.html.index("Your new application is ready."))
   }
 
+  def replicateFeed = Action { implicit request =>
+    Ok.feed(TwitterStreamer.subscribeNode)
+  }
 
   def tweets = WebSocket.acceptWithActor[String, JsValue] {
     request => out => TwitterStreamer.props(out)
